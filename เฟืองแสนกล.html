@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สถานการณ์จำลอง: กิจกรรมที่ 2.2 เฟืองแสนกล</title>
+    <style>
+        :root { --spin-duration: 1.5s; }
+
+        body {
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 0; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        h1 { color: #0056b3; text-align: center; margin: 15px 0 5px 0; font-size: 2.2rem; }
+        h2 { color: #004494; font-size: 1.3rem; margin-top: 0; }
+        
+        .container {
+            background: white;
+            width: 100vw;
+            min-height: 100vh;
+            padding: 10px 4vw 30px 4vw; 
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .simulation-area {
+            position: relative;
+            height: 45vh; 
+            min-height: 350px; 
+            background-color: #e9ecef;
+            border: 2px dashed #adb5bd;
+            border-radius: 12px;
+            margin: 15px 0 20px 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-reset {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            font-family: inherit;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: background 0.3s, transform 0.1s;
+            z-index: 20;
+        }
+        .btn-reset:hover { background: #c82333; }
+        .btn-reset:active { transform: scale(0.95); }
+        
+        .gear-system-container {
+            position: relative;
+            width: 580px; 
+            height: 250px;
+            transition: transform 0.3s ease;
+        }
+
+        @media (min-width: 1024px) { .gear-system-container { transform: scale(1.1); } }
+        @media (min-width: 1366px) { .gear-system-container { transform: scale(1.3); } }
+        @media (min-width: 1600px) { .gear-system-container { transform: scale(1.5); } }
+        @media (min-width: 1920px) { .gear-system-container { transform: scale(1.7); } }
+
+        .gear {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: width 0.4s, height 0.4s, top 0.4s, left 0.4s, background-color 0.4s, transform var(--spin-duration) linear;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.2), 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .gear::before {
+            content: '';
+            position: absolute;
+            top: -6px; left: -6px; right: -6px; bottom: -6px;
+            border-radius: 50%;
+            border: 12px dashed rgba(0,0,0,0.35);
+        }
+
+        .gear::after {
+            content: '';
+            position: absolute;
+            top: -6px; left: -6px; right: -6px; bottom: -6px; 
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0.8);
+            opacity: 0;
+            pointer-events: none; 
+            z-index: 10;
+        }
+
+        .flash::after { animation: gearFlash 0.5s ease-out; }
+
+        @keyframes gearFlash {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.2); } 
+        }
+
+        .marker {
+            width: 16px;
+            height: 16px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .size-small  { width: 80px;  height: 80px;  top: 70px; background-color: #4CAF50; } 
+        .size-medium { width: 120px; height: 120px; top: 50px;  background-color: #FF9800; } 
+        .size-large  { width: 160px; height: 160px; top: 30px;  background-color: #2196F3; } 
+        
+        #gear-driver { left: 140px; z-index: 2; }
+        #gear-driven { left: 242px; z-index: 1; }
+
+        .gear-label {
+            position: absolute;
+            top: 190px; 
+            font-size: 15px;
+            font-weight: bold;
+            text-align: center;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: left 0.4s, width 0.4s;
+        }
+        #label-driver { left: 140px; width: 120px; }
+        #label-driven { left: 242px; transition: width 0.4s; }
+
+        .counter-badge {
+            position: absolute;
+            top: 45px; 
+            color: white;
+            padding: 10px 8px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            border: 3px solid white; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+            width: 110px; 
+            z-index: 5;
+            transition: background-color 0.4s; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .dir-badge {
+            background-color: rgba(0, 0, 0, 0.25);
+            border-radius: 20px;
+            padding: 4px 10px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 85%;
+        }
+        .dir-icon { font-size: 16px; display: inline-block; }
+        .dir-text { font-size: 13px; font-weight: bold; }
+
+        @keyframes spinCW { 100% { transform: rotate(360deg); } }
+        @keyframes spinCCW { 100% { transform: rotate(-360deg); } }
+        .anim-cw { animation: spinCW 1.5s linear infinite; }
+        .anim-ccw { animation: spinCCW 1.5s linear infinite; }
+
+        .counter-num { font-size: 26px; font-family: monospace; font-weight: bold; line-height: 1; }
+        .counter-text { font-size: 15px; font-weight: bold; margin-top: 5px; }
+        
+        #counter-driver { left: 0px; background-color: #FF9800; }
+        #counter-driven { right: 0px; background-color: #FF9800; }
+        
+        .speed-control-bar {
+            text-align: center;
+            background: #e3f2fd;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #bbdefb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .speed-label { font-weight: bold; margin-right: 10px; color: #0d47a1; font-size: 1.1rem; }
+        .speed-btn {
+            background: white;
+            border: 1px solid #1976d2;
+            color: #1976d2;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .speed-btn:hover { background: #e3f2fd; }
+        .speed-btn.active { background: #1976d2; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .speed-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .controls-wrapper { display: flex; gap: 30px; width: 100%; flex-grow: 1; }
+        .controls {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .controls p { margin: 5px 0 15px 0; font-size: 1rem; color: #555;}
+        
+        .btn {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: inherit;
+            transition: background 0.3s, transform 0.1s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .btn:hover { background-color: #004494; transform: translateY(-1px); }
+        .btn:active { transform: translateY(1px); }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; transform: none; }
+        
+        .result-box {
+            font-weight: bold;
+            color: #d32f2f;
+            margin-top: auto;
+            padding: 15px;
+            background: #ffebee;
+            border-radius: 6px;
+            border: 1px solid #ef9a9a;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        select { padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ced4da; font-family: inherit; width: 100%; margin-bottom: 15px; box-sizing: border-box; }
+
+        /* ส่วนท้าย (ที่มาและผู้พัฒนา) */
+        .reference-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f1f3f4;
+            border-top: 2px solid #dee2e6;
+            text-align: center;
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            .controls-wrapper { flex-direction: column; gap: 15px; }
+            .simulation-area { height: 35vh; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔬 สถานการณ์จำลอง: กิจกรรมที่ 2.2 เฟืองแสนกล</h1>
+    
+    <div class="simulation-area">
+        <button class="btn-reset" onclick="resetSimulation()">🔄 เริ่มใหม่ (Reset)</button>
+
+        <div class="gear-system-container">
+            <div id="counter-driver" class="counter-badge">
+                <div class="dir-badge">
+                    <span id="dir-icon-driver" class="dir-icon">⏹️</span>
+                    <span id="dir-text-driver" class="dir-text">หยุดนิ่ง</span>
+                </div>
+                <div id="val-driver" class="counter-num">0.00</div>
+                <div class="counter-text">รอบ</div>
+            </div>
+
+            <div id="gear-driver" class="gear size-medium">
+                <div class="marker"></div>
+            </div>
+            <div id="label-driver" class="gear-label">
+                <span id="name-driver">เฟืองขับ<br>(ขนาดกลาง)</span>
+            </div>
+            
+            <div id="gear-driven" class="gear size-medium">
+                <div class="marker"></div>
+            </div>
+            <div id="label-driven" class="gear-label">
+                <span id="name-driven-label">เฟืองตาม<br>(ขนาดกลาง)</span>
+            </div>
+
+            <div id="counter-driven" class="counter-badge">
+                <div class="dir-badge">
+                    <span id="dir-icon-driven" class="dir-icon">⏹️</span>
+                    <span id="dir-text-driven" class="dir-text">หยุดนิ่ง</span>
+                </div>
+                <div id="val-driven" class="counter-num">0.00</div>
+                <div class="counter-text">รอบ</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="speed-control-bar">
+        <span class="speed-label">⏱️ ความเร็ว:</span>
+        <button class="speed-btn" onclick="setSpeedMultiplier(0.25, this)">0.25x (ช้ามาก)</button>
+        <button class="speed-btn" onclick="setSpeedMultiplier(0.5, this)">0.5x (ช้า)</button>
+        <button class="speed-btn active" id="btn-speed-normal" onclick="setSpeedMultiplier(1, this)">1x (ปกติ)</button>
+        <button class="speed-btn" onclick="setSpeedMultiplier(1.5, this)">1.5x (เร็ว)</button>
+        <button class="speed-btn" onclick="setSpeedMultiplier(2, this)">2x (เร็วมาก)</button>
+    </div>
+
+    <div class="controls-wrapper">
+        <div class="controls">
+            <h2>ตอนที่ 1: หมุนไปทางไหนดี</h2>
+            <p><em>(บังคับใช้เฟืองขนาดกลาง 2 ตัวขบกัน)</em></p>
+            <button class="btn main-action-btn" id="btn-cw" onclick="runPart1('cw')">🔄 หมุนเฟืองขับ ตามเข็มนาฬิกา (1 รอบ)</button>
+            <button class="btn main-action-btn" id="btn-ccw" onclick="runPart1('ccw')">🔂 หมุนเฟืองขับ ทวนเข็มนาฬิกา (1 รอบ)</button>
+            <div id="result-part1" class="result-box" style="display: none;"></div>
+        </div>
+
+        <div class="controls">
+            <h2>ตอนที่ 2: ใหญ่ไล่เล็กหรือเล็กไล่ใหญ่</h2>
+            <p>1. เลือกขนาดเฟือง (ขับ ➡️ ตาม):</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <select id="driver-size" class="main-action-btn" onchange="changeGearSize()" style="margin-bottom: 0;">
+                    <option value="small">ขับ: เล็ก</option>
+                    <option value="medium" selected>ขับ: กลาง</option>
+                    <option value="large">ขับ: ใหญ่</option>
+                </select>
+                <select id="driven-size" class="main-action-btn" onchange="changeGearSize()" style="margin-bottom: 0;">
+                    <option value="small">ตาม: เล็ก</option>
+                    <option value="medium" selected>ตาม: กลาง</option>
+                    <option value="large">ตาม: ใหญ่</option>
+                </select>
+            </div>
+            <p>2. กดปุ่มหมุนเพื่อสังเกตจำนวนรอบ:</p>
+            <button class="btn main-action-btn" id="btn-part2" onclick="runPart2()">⚙️ หมุนเฟืองขับ 5 รอบ</button>
+            <div id="result-part2" class="result-box" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="reference-section">
+        <p><strong>พัฒนาโดย:</strong> นายปัญญสิษฐ พรมขำ โรงเรียนทุ่งเสลี่ยมชนูปถัมภ์</p>
+        <p><strong>ที่มาของกิจกรรม:</strong> เอกสารกิจกรรม รายวิชาเพิ่มเติม วิทยาศาสตร์พลังสิบ ชั้นมัธยมศึกษาปีที่ 1 ภาคเรียนที่ 1 เรื่อง "ของเล่นของใช้"<br>
+        จัดทำโดย: สถาบันส่งเสริมการสอนวิทยาศาสตร์และเทคโนโลยี (สสวท.) กระทรวงศึกษาธิการ</p>
+        <p>&copy; 2026 สงวนลิขสิทธิ์</p>
+    </div>
+</div>
+
+<script>
+    const gearData = {
+        small: { teeth: 10, width: 80, color: '#4CAF50' },
+        medium: { teeth: 20, width: 120, color: '#FF9800' },
+        large: { teeth: 30, width: 160, color: '#2196F3' }
+    };
+
+    let currentAngleDriver = 0;
+    let currentAngleDriven = 0;
+    
+    const baseTimePerRotation = 1.5; 
+    let speedMultiplier = 1; 
+    let simulationTimer = null; 
+    let counterAnimationId = null; 
+
+    function setDirectionUI(driverDir) {
+        const dIcon = document.getElementById('dir-icon-driver');
+        const dText = document.getElementById('dir-text-driver');
+        const dnIcon = document.getElementById('dir-icon-driven');
+        const dnText = document.getElementById('dir-text-driven');
+
+        if (driverDir === 'cw') {
+            dIcon.innerText = '↻'; dIcon.className = 'dir-icon anim-cw'; dText.innerText = 'ตามเข็ม';
+            dnIcon.innerText = '↺'; dnIcon.className = 'dir-icon anim-ccw'; dnText.innerText = 'ทวนเข็ม';
+        } else if (driverDir === 'ccw') {
+            dIcon.innerText = '↺'; dIcon.className = 'dir-icon anim-ccw'; dText.innerText = 'ทวนเข็ม';
+            dnIcon.innerText = '↻'; dnIcon.className = 'dir-icon anim-cw'; dnText.innerText = 'ตามเข็ม';
+        } else {
+            dIcon.innerText = '⏹️'; dIcon.className = 'dir-icon'; dText.innerText = 'หยุดนิ่ง';
+            dnIcon.innerText = '⏹️'; dnIcon.className = 'dir-icon'; dnText.innerText = 'หยุดนิ่ง';
+        }
+    }
+
+    function triggerFlash(gearId) {
+        const gear = document.getElementById(gearId);
+        gear.classList.remove('flash');
+        void gear.offsetWidth; 
+        gear.classList.add('flash');
+    }
+
+    function snapGearsToZero() {
+        if (counterAnimationId) cancelAnimationFrame(counterAnimationId);
+        const gears = document.querySelectorAll('.gear');
+        gears.forEach(gear => {
+            gear.style.transition = 'width 0.4s, height 0.4s, top 0.4s, left 0.4s, background-color 0.4s';
+            gear.classList.remove('flash'); 
+        });
+        
+        currentAngleDriver = 0;
+        currentAngleDriven = 0;
+        updateGearTransforms();
+        
+        document.getElementById('val-driver').innerText = '0.00';
+        document.getElementById('val-driven').innerText = '0.00';
+        setDirectionUI('stop'); 
+
+        gears.forEach(gear => void gear.offsetWidth);
+        gears.forEach(gear => gear.style.transition = 'width 0.4s, height 0.4s, top 0.4s, left 0.4s, background-color 0.4s, transform var(--spin-duration) linear');
+    }
+
+    function resetSimulation() {
+        if (simulationTimer) clearTimeout(simulationTimer);
+        document.getElementById('driver-size').value = 'medium';
+        document.getElementById('driven-size').value = 'medium';
+        changeGearSize();
+        setSpeedMultiplier(1, document.getElementById('btn-speed-normal'));
+        document.getElementById('result-part1').style.display = 'none';
+        document.getElementById('result-part2').style.display = 'none';
+        document.querySelectorAll('.main-action-btn, .speed-btn').forEach(btn => btn.disabled = false);
+    }
+
+    function setSpeedMultiplier(multiplier, clickedBtn) {
+        speedMultiplier = multiplier;
+        document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+        clickedBtn.classList.add('active');
+    }
+
+    function changeGearSize() {
+        const driverSizeKey = document.getElementById('driver-size').value;
+        const drivenSizeKey = document.getElementById('driven-size').value;
+        
+        const driverGear = document.getElementById('gear-driver');
+        const drivenGear = document.getElementById('gear-driven');
+        const driverLabel = document.getElementById('label-driver');
+        const drivenLabel = document.getElementById('label-driven');
+        const nameDriver = document.getElementById('name-driver');
+        const nameDrivenLabel = document.getElementById('name-driven-label');
+        const badgeDriver = document.getElementById('counter-driver');
+        const badgeDriven = document.getElementById('counter-driven');
+        
+        driverGear.className = `gear size-${driverSizeKey}`;
+        drivenGear.className = `gear size-${drivenSizeKey}`;
+        
+        const driverWidth = gearData[driverSizeKey].width;
+        const drivenWidth = gearData[drivenSizeKey].width;
+        const overlap = 18;
+        const totalWidth = driverWidth + drivenWidth - overlap;
+        const startLeft = (580 - totalWidth) / 2;
+        
+        driverGear.style.left = startLeft + 'px';
+        drivenGear.style.left = (startLeft + driverWidth - overlap) + 'px';
+        driverLabel.style.left = startLeft + 'px';
+        driverLabel.style.width = driverWidth + 'px';
+        drivenLabel.style.left = (startLeft + driverWidth - overlap) + 'px';
+        drivenLabel.style.width = drivenWidth + 'px';
+        
+        nameDriver.innerHTML = `เฟืองขับ<br>(ขนาด${getThaiSize(driverSizeKey)})`;
+        nameDrivenLabel.innerHTML = `เฟืองตาม<br>(ขนาด${getThaiSize(drivenSizeKey)})`;
+        
+        badgeDriver.style.backgroundColor = gearData[driverSizeKey].color;
+        badgeDriven.style.backgroundColor = gearData[drivenSizeKey].color;
+        
+        snapGearsToZero();
+        document.getElementById('result-part1').style.display = 'none';
+        document.getElementById('result-part2').style.display = 'none';
+    }
+
+    function runPart1(direction) {
+        document.getElementById('driver-size').value = 'medium';
+        document.getElementById('driven-size').value = 'medium';
+        changeGearSize();
+        setTimeout(() => { rotateGears(direction, 1, true); }, 50);
+    }
+
+    function runPart2() { rotateGears('cw', 5, false); }
+
+    function rotateGears(direction, rotationsDriver, isPart1) {
+        const actionBtns = document.querySelectorAll('.main-action-btn');
+        const speedBtns = document.querySelectorAll('.speed-btn');
+        actionBtns.forEach(btn => btn.disabled = true);
+        speedBtns.forEach(btn => btn.disabled = true);
+        setDirectionUI(direction);
+
+        const driverSizeKey = document.getElementById('driver-size').value;
+        const drivenSizeKey = document.getElementById('driven-size').value;
+        const ratio = gearData[driverSizeKey].teeth / gearData[drivenSizeKey].teeth;
+        const degreesToRotateDriver = rotationsDriver * 360;
+        
+        const startAngleDriver = currentAngleDriver;
+        const startAngleDriven = currentAngleDriven;
+
+        if (direction === 'cw') {
+            currentAngleDriver += degreesToRotateDriver;
+            currentAngleDriven -= (degreesToRotateDriver * ratio);
+        } else {
+            currentAngleDriver -= degreesToRotateDriver;
+            currentAngleDriven += (degreesToRotateDriver * ratio);
+        }
+
+        const endAngleDriver = currentAngleDriver;
+        const endAngleDriven = currentAngleDriven;
+        const totalDurationSec = (baseTimePerRotation / speedMultiplier) * rotationsDriver;
+        const totalDurationMs = totalDurationSec * 1000;
+        
+        document.documentElement.style.setProperty('--spin-duration', `${totalDurationSec}s`);
+        updateGearTransforms();
+
+        const startTime = performance.now();
+        if (counterAnimationId) cancelAnimationFrame(counterAnimationId);
+
+        let previousFloorDriver = Math.floor(Math.abs(startAngleDriver) / 360);
+        let previousFloorDriven = Math.floor(Math.abs(startAngleDriven) / 360);
+
+        function animateCounter(currentTime) {
+            const elapsed = currentTime - startTime;
+            let progress = elapsed / totalDurationMs;
+            if (progress > 1) progress = 1;
+            const currentDisplayAngleDriver = startAngleDriver + ((endAngleDriver - startAngleDriver) * progress);
+            const currentDisplayAngleDriven = startAngleDriven + ((endAngleDriven - startAngleDriven) * progress);
+
+            document.getElementById('val-driver').innerText = (Math.abs(currentDisplayAngleDriver) / 360).toFixed(2);
+            document.getElementById('val-driven').innerText = (Math.abs(currentDisplayAngleDriven) / 360).toFixed(2);
+
+            let currentFloorDriver = Math.floor(Math.abs(currentDisplayAngleDriver) / 360);
+            if (currentFloorDriver > previousFloorDriver) { triggerFlash('gear-driver'); previousFloorDriver = currentFloorDriver; }
+            let currentFloorDriven = Math.floor(Math.abs(currentDisplayAngleDriven) / 360);
+            if (currentFloorDriven > previousFloorDriven) { triggerFlash('gear-driven'); previousFloorDriven = currentFloorDriven; }
+
+            if (progress < 1) counterAnimationId = requestAnimationFrame(animateCounter);
+        }
+        counterAnimationId = requestAnimationFrame(animateCounter);
+
+        simulationTimer = setTimeout(() => {
+            actionBtns.forEach(btn => btn.disabled = false);
+            speedBtns.forEach(btn => btn.disabled = false);
+            setDirectionUI('stop');
+            
+            if (isPart1) {
+                const res1 = document.getElementById('result-part1');
+                const dirTextDriver = direction === 'cw' ? 'ตามเข็มนาฬิกา' : 'ทวนเข็มนาฬิกา';
+                const dirTextDriven = direction === 'cw' ? 'ทวนเข็มนาฬิกา' : 'ตามเข็มนาฬิกา';
+                res1.innerHTML = `✅ <b>สรุป:</b> เฟืองขับหมุน "${dirTextDriver}" <br>➡️ เฟืองตามจะหมุนในทิศทาง <b>"${dirTextDriven}"</b>`;
+                res1.style.display = 'block';
+                document.getElementById('result-part2').style.display = 'none';
+            } else {
+                const res2 = document.getElementById('result-part2');
+                const rotationsDriven = (rotationsDriver * ratio).toFixed(2);
+                res2.innerHTML = `✅ <b>สรุป:</b> เฟืองขับ (${getThaiSize(driverSizeKey)}) หมุน 5 รอบ <br>➡️ เฟืองตาม (${getThaiSize(drivenSizeKey)}) จะหมุนได้ <b>${parseFloat(rotationsDriven)} รอบ</b>`;
+                res2.style.display = 'block';
+                document.getElementById('result-part1').style.display = 'none';
+            }
+        }, totalDurationMs);
+    }
+
+    function updateGearTransforms() {
+        document.getElementById('gear-driver').style.transform = `rotate(${currentAngleDriver}deg)`;
+        document.getElementById('gear-driven').style.transform = `rotate(${currentAngleDriven}deg)`;
+    }
+
+    function getThaiSize(size) {
+        if(size === 'small') return 'เล็ก';
+        if(size === 'medium') return 'กลาง';
+        if(size === 'large') return 'ใหญ่';
+    }
+
+    window.onload = function() {
+        changeGearSize();
+        snapGearsToZero(); 
+    };
+</script>
+
+</body>
+</html>
